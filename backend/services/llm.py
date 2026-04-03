@@ -2,8 +2,13 @@ from groq import Groq
 from core.config import settings
 from models.schemas import ChunkSource
 
-_groq = Groq(api_key=settings.GROQ_API_KEY)
+_groq = None
 
+def _get_groq():
+    global _groq
+    if _groq is None:
+        _groq = Groq(api_key=settings.GROQ_API_KEY)
+    return _groq
 _SYSTEM_PROMPT = """You are a legal document assistant for a law firm.
 You answer questions strictly based on the document context provided below.
 Rules you must follow:
@@ -30,7 +35,7 @@ def generate_answer(question: str, chunks: list[dict]) -> str:
     context = _build_context_block(chunks)
     user_message = f"Context:\n{context}\n\nQuestion: {question}"
 
-    response = _groq.chat.completions.create(
+    response = _get_groq().chat.completions.create(
         model=settings.LLM_MODEL,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},

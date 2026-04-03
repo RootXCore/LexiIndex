@@ -5,7 +5,13 @@ from services.indexer import add_page_summary, query_page_index, query_chunks
 from services.embedder import embedder
 
 
-_groq = Groq(api_key=settings.GROQ_API_KEY)
+_groq = None
+
+def _get_groq():
+    global _groq
+    if _groq is None:
+        _groq = Groq(api_key=settings.GROQ_API_KEY)
+    return _groq
 
 
 def _summarize_page(page_text: str, source_file: str, page_num: int) -> str:
@@ -14,7 +20,7 @@ def _summarize_page(page_text: str, source_file: str, page_num: int) -> str:
         f"Be specific about topics, names, dates, or legal concepts mentioned.\n\n"
         f"{page_text[:2000]}"
     )
-    response = _groq.chat.completions.create(
+    response = _get_groq().chat.completions.create(
         model=settings.SUMMARY_MODEL,
         messages=[{"role": "user", "content": prompt}],
         max_tokens=120,

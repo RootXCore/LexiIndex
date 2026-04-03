@@ -2,23 +2,27 @@ from pinecone import Pinecone, ServerlessSpec
 from core.config import settings
 from services.embedder import embedder
 
-# Initialize Pinecone
-pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+_pc = None
+_index = None
 
-# Create index if it doesn't exist
-index_name = settings.PINECONE_INDEX_NAME
-if index_name not in pc.list_indexes().names():
-    pc.create_index(
-        name=index_name,
-        dimension=384,  # all-MiniLM-L6-v2 dimension
-        metric="cosine",
-        spec=ServerlessSpec(
-            cloud="aws",
-            region=settings.PINECONE_ENVIRONMENT
-        )
-    )
+def _get_index():
+    global _pc, _index
+    if _index is None:
+        _pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+        index_name = settings.PINECONE_INDEX_NAME
+        if index_name not in _pc.list_indexes().names():
+            _pc.create_index(
+                name=index_name,
+                dimension=384,  # all-MiniLM-L6-v2 dimension
+                metric="cosine",
+                spec=ServerlessSpec(
+                    cloud="aws",
+                    region=settings.PINECONE_ENVIRONMENT
+                )
+            )
+        _index = _pc.Index(index_name)
+    return _index
 
-index = pc.Index(index_name)
 
 
 def add_chunks(chunks: list[dict]) -> int:
@@ -44,7 +48,7 @@ def add_chunks(chunks: list[dict]) -> int:
     batch_size = 100
     for i in range(0, len(vectors), batch_size):
         batch = vectors[i:i + batch_size]
-        index.upsert(vectors=batch, namespace=settings.PINECONE_NAMESPACE_CHUNKS)
+        _get_index().upsert(vectors=batch, namespace=settings.PINECONE_NAMESPACE_CHUNKS)
 
     return len(chunks)
 
@@ -52,7 +56,7 @@ def add_chunks(chunks: list[dict]) -> int:
 def add_page_summary(summary_id: str, summary_text: str, metadata: dict):
     embedding = embedder.embed_one(summary_text)
     
-    index.upsert(
+    _get_index().upsert(
         vectors=[{
             "id": summary_id,
             "values": embedding,
@@ -65,7 +69,7 @@ def add_page_summary(summary_id: str, summary_text: str, metadata: dict):
 def query_page_index(query_embedding: list[float], upload_ids: list[str] | None, top_k: int) -> list[dict]:
     filter_dict = {"upload_id": {"$in": upload_ids}} if upload_ids else None
     
-    results = index.query(
+    results = _get_index().query(
         vector=query_embedding,
         top_k=top_k,
         include_metadata=True,
@@ -107,7 +111,7 @@ def query_chunks(query_embedding: list[float], page_filters: list[dict], top_k: 
             ]
         }
 
-    results = index.query(
+    results = _get_index().query(
         vector=query_embedding,
         top_k=top_k,
         include_metadata=True,
