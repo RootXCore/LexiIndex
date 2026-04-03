@@ -1,5 +1,3 @@
-import fitz
-import pandas as pd
 from io import BytesIO
 from uuid import uuid4
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -29,6 +27,8 @@ def _chunk_page(text: str, metadata: dict) -> list[dict]:
 
 
 def parse_pdf(file_bytes: bytes, filename: str, upload_id: str) -> tuple[list[dict], list[dict]]:
+    import fitz
+
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     all_chunks = []
     page_texts = []
@@ -89,6 +89,8 @@ def parse_txt(file_bytes: bytes, filename: str, upload_id: str) -> tuple[list[di
 
 
 def parse_csv(file_bytes: bytes, filename: str, upload_id: str) -> tuple[list[dict], list[dict]]:
+    import pandas as pd
+
     df = pd.read_csv(BytesIO(file_bytes))
     rows_per_page = 20
     all_chunks = []
@@ -123,6 +125,8 @@ def parse_csv(file_bytes: bytes, filename: str, upload_id: str) -> tuple[list[di
 
 
 def parse_excel(file_bytes: bytes, filename: str, upload_id: str) -> tuple[list[dict], list[dict]]:
+    import pandas as pd
+
     df = pd.read_excel(BytesIO(file_bytes))
     rows_per_page = 20
     all_chunks = []

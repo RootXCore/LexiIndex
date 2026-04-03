@@ -1,6 +1,4 @@
-from sentence_transformers import SentenceTransformer
 from core.config import settings
-import numpy as np
 
 
 class Embedder:
@@ -14,6 +12,8 @@ class Embedder:
 
     def _get_model(self):
         if self._model is None:
+            from sentence_transformers import SentenceTransformer
+
             self._model = SentenceTransformer(settings.EMBEDDING_MODEL)
         return self._model
 
