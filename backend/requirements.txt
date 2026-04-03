@@ -6,7 +6,7 @@ groq
 langchain
 langchain-text-splitters
 sentence-transformers
-chromadb
+pinecone-client
 pymupdf
 pandas
 openpyxl

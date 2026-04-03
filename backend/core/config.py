@@ -1,8 +1,9 @@
 from pydantic_settings import BaseSettings
-from pathlib import Path
 
 class Settings(BaseSettings):
     GROQ_API_KEY: str
+    PINECONE_API_KEY: str
+    PINECONE_ENVIRONMENT: str = "us-east-1"
     FRONTEND_URL: str = "http://localhost:5173"
 
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
@@ -14,13 +15,11 @@ class Settings(BaseSettings):
     TOP_K_PAGES: int = 3
     TOP_K_CHUNKS: int = 5
 
-    CHROMA_PERSIST_DIR: str = "./chroma_store"
-    CHUNKS_COLLECTION: str = "chunks"
-    PAGE_INDEX_COLLECTION: str = "page_index"
+    PINECONE_INDEX_NAME: str = "lexindex"
+    PINECONE_NAMESPACE_CHUNKS: str = "chunks"
+    PINECONE_NAMESPACE_PAGES: str = "page-index"
 
     class Config:
         env_file = "backend/.env"
 
 settings = Settings()
-CHROMA_PATH = Path(settings.CHROMA_PERSIST_DIR)
-CHROMA_PATH.mkdir(parents=True, exist_ok=True)
